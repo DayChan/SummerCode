@@ -11,8 +11,9 @@ from rich.text import Text
 class TextualCallbackHandler(BaseCallbackHandler):
     """Callback Handler that writes to a Textual RichLog widget."""
 
-    def __init__(self, rich_log: RichLog):
+    def __init__(self, rich_log: RichLog, on_token_usage: Optional[callable] = None):
         self.rich_log = rich_log
+        self.on_token_usage = on_token_usage
 
     def on_llm_start(
         self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
@@ -22,8 +23,11 @@ class TextualCallbackHandler(BaseCallbackHandler):
 
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """Run when LLM ends running."""
-        # self.rich_log.write(Panel(Text("Thinking complete.", style="bold green"), title="LLM End"))
-        pass
+        if self.on_token_usage and response.llm_output:
+            token_usage = response.llm_output.get("token_usage", {})
+            total_tokens = token_usage.get("total_tokens", 0)
+            if total_tokens > 0:
+                self.on_token_usage(total_tokens)
 
     def on_tool_start(
         self, serialized: Dict[str, Any], input_str: str, **kwargs: Any

@@ -32,12 +32,21 @@ class SummerCodeApp(App):
         dock: bottom;
         margin: 1;
     }
+
+    #token_stats {
+        dock: top;
+        height: 1;
+        background: $primary;
+        color: $text;
+        padding: 0 1;
+    }
     """
 
     BINDINGS = [("q", "quit", "Quit")]
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield Static("Total Tokens: 0", id="token_stats")
         with Container(id="chat-container"):
             yield RichLog(id="chat_log", highlight=True, markup=True)
         yield Input(placeholder="Type your instruction here...", id="user_input")
@@ -52,8 +61,14 @@ class SummerCodeApp(App):
         # Initialize agent
         self.llm = init_chat_model()
         self.agent = create_coding_agent(self.llm)
+        self.total_tokens = 0
         
         self.chat_log.write("[bold green]Welcome to SummerCode Agent![/bold green]")
+
+    def update_token_count(self, tokens: int) -> None:
+        """Update the total token count."""
+        self.total_tokens += tokens
+        self.query_one("#token_stats", Static).update(f"Total Tokens: {self.total_tokens}")
 
     async def on_input_submitted(self, message: Input.Submitted) -> None:
         """Handle user input submission."""
@@ -70,7 +85,10 @@ class SummerCodeApp(App):
     @work(exclusive=True)
     async def run_agent(self, user_message: str) -> None:
         """Run the agent in a background worker."""
-        callback = TextualCallbackHandler(self.chat_log)
+        callback = TextualCallbackHandler(
+            self.chat_log, 
+            on_token_usage=lambda tokens: self.call_from_thread(self.update_token_count, tokens)
+        )
         try:
             # Since invoke is synchronous, we might need to run it in a thread if we want to be truly async, 
             # but Textual's worker can handle it. However, langchain invoke is blocking.
