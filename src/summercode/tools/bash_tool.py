@@ -27,11 +27,14 @@ class BashTool(BaseTool):
                 command, 
                 shell=True, 
                 capture_output=True, 
-                text=True
+                text=True,
+                timeout=10
             )
             output = result.stdout
             if result.stderr:
                 output += f"\nStderr: {result.stderr}"
             return output if output else "Command executed successfully with no output."
+        except subprocess.TimeoutExpired:
+            return "Error: Command timed out after 10 seconds."
         except Exception as e:
             return f"Error executing command: {e}"
