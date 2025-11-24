@@ -38,7 +38,8 @@ class TextualCallbackHandler(BaseCallbackHandler):
 
     def on_tool_end(self, output: str, **kwargs: Any) -> None:
         """Run when tool ends running."""
-        self.rich_log.write(Panel(Text(f"Tool Output:\n{output}", style="dim"), title="Tool End"))
+        # self.rich_log.write(Panel(Text(f"Tool Output:\n{output}", style="dim"), title="Tool End"))
+        pass
 
     def on_agent_action(self, action: Any, **kwargs: Any) -> Any:
         """Run on agent action."""
