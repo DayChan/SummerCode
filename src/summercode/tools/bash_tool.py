@@ -19,6 +19,9 @@ class BashTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool."""
+        if "rm " in command or command.strip() == "rm":
+            return "Command blocked: 'rm' is not allowed for safety reasons."
+            
         try:
             result = subprocess.run(
                 command, 
